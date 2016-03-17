@@ -9,7 +9,10 @@ import android.support.v4.app.FragmentActivity;
 import android.os.Bundle;
 import android.view.View;
 import android.widget.EditText;
+import android.widget.Toast;
 
+import com.daimajia.slider.library.SliderLayout;
+import com.daimajia.slider.library.SliderTypes.TextSliderView;
 import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.OnMapReadyCallback;
@@ -24,6 +27,7 @@ public class MapsActivity extends
         FragmentActivity implements OnMapReadyCallback {
 
     private GoogleMap mMap;
+    SliderLayout sliderShow;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -33,6 +37,9 @@ public class MapsActivity extends
         SupportMapFragment mapFragment = (SupportMapFragment) getSupportFragmentManager()
                 .findFragmentById(R.id.map);
         mapFragment.getMapAsync(this);
+
+        sliderShow = (SliderLayout) findViewById(R.id.slider);
+        sliderIntro();
     }
 
 
@@ -88,13 +95,39 @@ public class MapsActivity extends
 
                 LatLng lat = new LatLng(address1.getLatitude(), address1.getLongitude());
                 mMap.addMarker(new MarkerOptions().position(lat).title("Marker"));
-                mMap.moveCamera(CameraUpdateFactory.newLatLng(lat));
+                mMap.animateCamera(CameraUpdateFactory.newLatLng(lat));
+                Toast.makeText(getBaseContext(), "Found Location!", Toast.LENGTH_LONG).show();
+                slider();
                 //mMap.animateCamera(CameraUpdateFactory.newLatLng(lat));
             }
         } else {
             //error popup message
+            Toast.makeText(getBaseContext(), "Please enter something", Toast.LENGTH_LONG).show();
         }
+    }
+
+    public void slider() {
+        TextSliderView textSliderView = new TextSliderView(this);
+        textSliderView
+                .description("Game of Thrones")
+                .image("http://images.boomsbeat.com/data/images/full/19640/game-of-thrones-season-4-jpg.jpg");
+
+        sliderShow.addSlider(textSliderView);
+    }
+
+    public void sliderIntro() {
+        TextSliderView textSliderView = new TextSliderView(this);
+        textSliderView
+                .description("Travel")
+                .image("http://www.exclusivegrouptravel.com/Careers/Beachchairs.jpg");
+
+        sliderShow.addSlider(textSliderView);
+    }
 
 
+    @Override
+    protected void onStop() {
+        sliderShow.stopAutoCycle();
+        super.onStop();
     }
 }
