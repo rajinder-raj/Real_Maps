@@ -5,4 +5,6 @@
     <!-- Upload Activity strings -->
     <string name="upload_title">Share Your Photos!</string>
     <string name="upload_button">Upload</string>
+    <string name="title_activity_add_photo">AddPhoto</string>
+    <string name="upload_name">Title:</string>
 </resources>

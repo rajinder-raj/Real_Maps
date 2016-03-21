@@ -46,7 +46,7 @@ public class MapsActivity extends
 
     public void onClickUpload(View view) {
         Button uploadAct = (Button) view;
-        Intent myIntent = new Intent(this, Upload.class);
+        Intent myIntent = new Intent(this, AddPhoto.class);
         startActivity(myIntent);
     }
 
