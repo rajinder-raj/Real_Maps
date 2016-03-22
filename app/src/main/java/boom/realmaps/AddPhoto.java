@@ -3,6 +3,7 @@ package boom.realmaps;
 import android.content.Intent;
 import android.graphics.Bitmap;
 import android.graphics.drawable.BitmapDrawable;
+import android.media.ExifInterface;
 import android.net.Uri;
 import android.os.Bundle;
 import android.provider.MediaStore;
@@ -12,6 +13,7 @@ import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
 import android.view.View;
 import android.widget.Button;
+import android.widget.CheckBox;
 import android.widget.EditText;
 import android.widget.ImageView;
 import android.widget.Toast;
@@ -20,13 +22,18 @@ import com.firebase.client.Firebase;
 import com.firebase.geofire.GeoFire;
 import com.firebase.geofire.GeoLocation;
 
+import java.io.IOError;
+import java.io.IOException;
+import java.util.zip.CheckedInputStream;
+
 public class AddPhoto extends AppCompatActivity implements View.OnClickListener {
     private static final int RESULT_LOAD_IMAGE = 1;
     private Firebase fbdb;
     private GeoFire geofbdb;
-    ImageView imageToUpload;
-    Button bUploadImage;
-    EditText uploadImageName;
+    private ImageView imageToUpload;
+    private Button bUploadImage;
+    private EditText uploadImageName;
+    private CheckBox check_useCurrentLocation;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -41,12 +48,14 @@ public class AddPhoto extends AppCompatActivity implements View.OnClickListener 
         // set buttons and listeners
         imageToUpload = (ImageView) findViewById(R.id.imageToUpload);
         bUploadImage = (Button) findViewById(R.id.bUploadImage);
-
         uploadImageName = (EditText) findViewById(R.id.etUploadName);
+        check_useCurrentLocation = (CheckBox) findViewById(R.id.useCurrLocation);
 
         imageToUpload.setOnClickListener(this);
         bUploadImage.setOnClickListener(this);
-
+        if (check_useCurrentLocation.isChecked()) {
+            check_useCurrentLocation.setChecked(false);
+        }
     }
 
     @Override
@@ -60,8 +69,16 @@ public class AddPhoto extends AppCompatActivity implements View.OnClickListener 
                 Bitmap image = ((BitmapDrawable) imageToUpload.getDrawable()).getBitmap(); // get image from imageToUpload button
                 if (image != null) {
                     String uploader = "raj"; // todo retrieve current user here
-                    double latitude = 0; // todo get coordinates lat
-                    double longitutde = 0; // todo get coordinates long
+                    double latitude = 0.0;
+                    double longitutde = 0.0;
+
+                    if (check_useCurrentLocation.isChecked()) {
+                        Bundle extras = getIntent().getExtras();
+                        if (extras != null) {
+                            latitude = extras.getDouble("boom.realmaps.EXTRA_CURR_LATITUDE");
+                            longitutde = extras.getDouble("boom.realmaps.EXTRA_CURR_LONGITUDE");
+                        }
+                    }
                     addImage(new Image(uploader, image), latitude, longitutde);
                 }
                 break;
@@ -70,7 +87,7 @@ public class AddPhoto extends AppCompatActivity implements View.OnClickListener 
     }
 
     /**
-     *
+     * Gallery selection binds the uri to the imageToUpload
      * @param requestCode
      * @param resultCode
      * @param data
@@ -84,15 +101,41 @@ public class AddPhoto extends AppCompatActivity implements View.OnClickListener 
         }
     }
 
-    public void addImage(Image img, double latitude, double longitude) {
+    /**
+     * Add image to the Firebase database with GeoFire support.
+     * @param img
+     * @param imgGeo
+     */
+    public void addImage(Image img, GeoLocation imgGeo) {
         Firebase fbdb_post = fbdb.child("images");
         Firebase fbdb_newpost = fbdb_post.push();
 
         fbdb_newpost.setValue(img);
 
         String key = fbdb_newpost.getKey();
-        GeoLocation imgGeo = new GeoLocation(latitude, longitude);
         geofbdb.setLocation(key, imgGeo);
         Toast.makeText(getApplicationContext(), "Image Uploaded Successfully", Toast.LENGTH_SHORT).show();
+    }
+
+    public void addImage(Image img, double latitude, double longitude) {
+        GeoLocation imgGeo = new GeoLocation(latitude, longitude);
+        addImage(img, imgGeo);
+    }
+
+    /**
+     * Extract the GeoLocation of an image based on its Exif info
+     * @param imagePath
+     * @return
+     */
+    public GeoLocation extractExifGeoLocation(String imagePath) {
+        try {
+            ExifInterface bitmapExif = new ExifInterface(imagePath);
+            double latitude = Double.parseDouble(bitmapExif.getAttribute(ExifInterface.TAG_GPS_LONGITUDE));
+            double longitude = Double.parseDouble(bitmapExif.getAttribute(ExifInterface.TAG_GPS_LONGITUDE));
+            return new GeoLocation(latitude, longitude);
+        }
+        catch (IOException e) {
+            return null;
+        }
     }
 }

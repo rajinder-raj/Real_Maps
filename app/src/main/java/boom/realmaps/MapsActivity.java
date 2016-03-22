@@ -25,9 +25,7 @@ import com.google.android.gms.maps.model.MarkerOptions;
 import java.io.IOException;
 import java.util.List;
 
-public class MapsActivity extends
-        FragmentActivity implements OnMapReadyCallback {
-
+public class MapsActivity extends FragmentActivity implements OnMapReadyCallback, GoogleMap.OnMapClickListener {
     private GoogleMap mMap;
     SliderLayout sliderShow;
 
@@ -47,6 +45,8 @@ public class MapsActivity extends
     public void onClickUpload(View view) {
         Button uploadAct = (Button) view;
         Intent myIntent = new Intent(this, AddPhoto.class);
+        myIntent.putExtra("boom.realmaps.EXTRA_CURR_LATITUDE", 10.10); // todo pass current latitude
+        myIntent.putExtra("boom.realmaps.EXTRA_CURR_LONGITUDE", 10.10); // todo pass current longitude
         startActivity(myIntent);
     }
 
@@ -83,6 +83,11 @@ public class MapsActivity extends
         mMap.addMarker(new MarkerOptions().position(sydney).title("Marker in Sydney"));
         mMap.moveCamera(CameraUpdateFactory.newLatLng(sydney));
         */
+    }
+
+    @Override
+    public void onMapClick(LatLng latLng) {
+
     }
 
     public void onSearch(View v) {
